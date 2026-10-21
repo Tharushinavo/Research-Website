@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Learning Tool for Dyscalculia Kids | R26-IT-138</title>
+<meta name="description" content="An integrated, data-driven platform for children with dyscalculia — cognitive profiling, personalized math, adaptive games, and early warning.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Sora', 'sans-serif'] }
+    }
+  }
+}
+</script>
+<style>
+/* ========== RESET & BASE ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px;-webkit-text-size-adjust:100%}
+body{font-family:'Inter',sans-serif;overflow-x:hidden;background:#fff;color:#1e293b;line-height:1.6}
+h1,h2,h3,h4,h5,h6,.font-display{font-family:'Sora',sans-serif;line-height:1.2}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ========== SCROLLBAR ========== */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#f1f5f9}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#6366f1,#a855f7);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4f46e5,#9333ea)}
+::selection{background:#a855f7;color:#fff}
+
+/* ========== PRELOADER ========== */
+#preloader{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#f5f3ff,#fdf2f8);display:flex;align-items:center;justify-content:center;transition:opacity .6s ease,visibility .6s ease}
+#preloader.hidden{opacity:0;visibility:hidden}
+.spinner{width:56px;height:56px;border-radius:50%;border:4px solid #e0e7ff;border-top-color:#6366f1;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ========== READING PROGRESS ========== */
+#readingProgress{position:fixed;top:0;left:0;height:3px;z-index:100;background:linear-gradient(90deg,#6366f1,#a855f7,#ec4899);width:0;transition:width .1s linear;box-shadow:0 0 12px rgba(168,85,247,.6)}
+
+/* ========== GRADIENT TEXT ========== */
+.gradient-text{background:linear-gradient(135deg,#4f46e5,#7c3aed 40%,#ec4899);background-size:200% 200%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:gradientShift 6s ease infinite}
+@keyframes gradientShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.shimmer-text{background:linear-gradient(90deg,#6366f1 0%,#ec4899 25%,#6366f1 50%,#ec4899 75%,#6366f1 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
+@keyframes shimmer{0%{background-position:0% center}100%{background-position:200% center}}
+
+/* ========== GLASS ========== */
+.glass{background:rgba(255,255,255,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.4)}
+
+/* ========== PATTERNS ========== */
+.hero-bg{background:radial-gradient(ellipse at 20% 30%,rgba(99,102,241,.25) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(168,85,247,.25) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(236,72,153,.2) 0%,transparent 50%),linear-gradient(135deg,#f5f3ff 0%,#faf5ff 50%,#fdf2f8 100%)}
+.grid-pattern{background-image:linear-gradient(rgba(99,102,241,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.07) 1px,transparent 1px);background-size:40px 40px}
+.dot-pattern{background-image:radial-gradient(rgba(99,102,241,.15) 1px,transparent 1px);background-size:24px 24px}
+
+/* ========== ANIMATIONS ========== */
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(6deg)}}
+@keyframes floatSlow{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(-4deg)}}
+@keyframes floatFast{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-25px) rotate(8deg)}}
+@keyframes blob{0%,100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}50%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%}}
+@keyframes pulseRing{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+@keyframes bounceSlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes fadeInUp{0%{opacity:0;transform:translateY(30px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes ping{75%,100%{transform:scale(2);opacity:0}}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+
+.animate-float{animation:float 6s ease-in-out infinite}
+.animate-float-slow{animation:floatSlow 9s ease-in-out infinite}
+.animate-float-fast{animation:floatFast 4.5s ease-in-out infinite}
+.animate-blob{animation:blob 12s ease-in-out infinite}
+.animate-bounce-slow{animation:bounceSlow 3s ease-in-out infinite}
+.animate-fade-in-up{animation:fadeInUp .9s ease-out both}
+
+/* ========== SCROLL REVEAL ========== */
+.reveal,.reveal-left,.reveal-right,.reveal-scale{opacity:0;transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.reveal{transform:translateY(40px)}
+.reveal-left{transform:translateX(-50px)}
+.reveal-right{transform:translateX(50px)}
+.reveal-scale{transform:scale(.92)}
+.reveal.visible,.reveal-left.visible,.reveal-right.visible,.reveal-scale.visible{opacity:1;transform:translate(0) scale(1)}
+
+/* ========== CARDS ========== */
+.card-lift{transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s ease}
+.card-lift:hover{transform:translateY(-8px);box-shadow:0 25px 50px -12px rgba(79,70,229,.25)}
+
+/* ========== BUTTONS ========== */
+.btn-primary{background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);background-size:200% 200%;transition:all .4s ease;box-shadow:0 10px 30px -10px rgba(99,102,241,.6);color:#fff}
+.btn-primary:hover{background-position:100% 50%;transform:translateY(-2px);box-shadow:0 20px 40px -10px rgba(168,85,247,.6)}
+.btn-primary:active{transform:translateY(0)}
+
+/* ========== NAV LINKS ========== */
+.nav-link{position:relative;transition:color .2s ease,background .2s ease}
+.nav-link.active{color:#4f46e5;background:rgba(99,102,241,.08);font-weight:600}
+
+/* ========== MOBILE MENU ========== */
+#mobileMenu{max-height:0;overflow:hidden;transition:max-height .4s ease}
+#mobileMenu.open{max-height:600px}
+
+/* ========== TIMELINE ========== */
+.timeline-progress{background:linear-gradient(180deg,#6366f1,#a855f7,#ec4899)}
+
+/* ========== DATA TABLES ========== */
+.data-table{border-collapse:separate;border-spacing:0;width:100%}
+.data-table thead th{background:linear-gradient(135deg,#f8fafc,#f1f5f9);font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#475569;padding:1rem;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap}
+.data-table tbody td{padding:.85rem 1rem;border-bottom:1px solid #f1f5f9;font-size:.875rem;white-space:nowrap}
+.data-table tbody tr{transition:background .2s ease}
+.data-table tbody tr:hover{background:#faf5ff}
+.data-table tbody tr.highlight{background:linear-gradient(90deg,#eef2ff,#faf5ff)}
+.data-table tbody tr.highlight td{font-weight:600;color:#4338ca}
+
+/* ========== BACK TO TOP ========== */
+#backToTop{position:fixed;bottom:2rem;right:2rem;z-index:50;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px -5px rgba(99,102,241,.5);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease}
+#backToTop.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+#backToTop:hover{transform:translateY(-3px) scale(1.05)}
+
+/* ========== PULSE DOT ========== */
+.pulse-dot{position:relative;display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981}
+.pulse-dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:inherit;animation:pulseRing 2s cubic-bezier(.4,0,.6,1) infinite}
+
+/* ========== MATH SYMBOLS ========== */
+.math-symbol{position:absolute;font-family:'Sora',sans-serif;font-weight:800;color:rgba(99,102,241,.13);pointer-events:none;user-select:none;z-index:1}
+
+/* ========== SKIP LINK ========== */
+.skip-link{position:absolute;left:-9999px;top:0;background:#4f46e5;color:#fff;padding:.5rem 1rem;z-index:100;border-radius:0 0 .5rem 0}
+.skip-link:focus{left:0}
+
+/* ========== RESPONSIVE TWEAKS ========== */
+@media (max-width:768px){
+  #backToTop{bottom:1rem;right:1rem;width:44px;height:44px}
+  .math-symbol{display:none}
+}
+</style>
+</head>
+<body>
+
+<a href="#home" class="skip-link">Skip to content</a>
+
+<!-- PRELOADER -->
+<div id="preloader" aria-hidden="true">
+  <div style="text-align:center">
+    <div class="spinner" style="margin:0 auto 1rem"></div>
+    <p style="font-size:.75rem;font-weight:600;color:#6366f1;letter-spacing:.2em;text-transform:uppercase">Loading</p>
+  </div>
+</div>
+
+<!-- READING PROGRESS -->
+<div id="readingProgress" aria-hidden="true"></div>
+
+<!-- ========== NAVBAR ========== -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 glass transition-shadow duration-300">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16 md:h-18">
+      <a href="#home" class="flex items-center gap-2.5 group" aria-label="MathsMate Home">
+        <div style="width:38px;height:38px;border-radius:.75rem;background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -6px rgba(99,102,241,.5);transition:transform .3s ease" class="group-hover:scale-110">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7h6m-6 4h6m-6 4h3M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+        </div>
+        <div style="line-height:1.15">
+          <span style="display:block;font-family:'Sora';font-weight:800;font-size:.95rem;color:#0f172a"><span style="color:#4f46e5">MathsMate</span></span>
+          <span style="display:block;font-size:.65rem;color:#64748b;font-weight:500;letter-spacing:.08em">R26-IT-138</span>
+        </div>
+      </a>
+
+      <div class="hidden lg:flex items-center gap-1" id="desktopNav">
+        <a href="#home" class="nav-link" style="padding:.5rem .85rem;font-size:.875rem;font-weight:500;color:#475569;border-radius:.5rem">Home</a>
+        <a href="#domain" class="nav-link" style="padding:.5rem .85rem;font-size:.875rem;font-weight:500;color:#475569;border-radius:.5rem">Scope</a>
+        <a href="#methodology" class="nav-link" style="padding:.5rem .85rem;font-size:.875rem;font-weight:500;color:#475569;border-radius:.5rem">Methodology</a>
+        <a href="#technologies" class="nav-link" style="padding:.5rem .85rem;font-size:.875rem;font-weight:500;color:#475569;border-radius:.5rem">Technologies</a>
+        <a href="#milestones" class="nav-link" style="padding:.5rem .85rem;font-size:.875rem;font-weight:500;color:#475569;border-radius:.5rem">Timeline</a>
+        <a href="#downloads" class="nav-link" style="padding:.5rem .85rem;font-size:.875rem;font-weight:500;color:#475569;border-radius:.5rem">Downloads</a>
+        <a href="#about" class="nav-link" style="padding:.5rem .85rem;font-size:.875rem;font-weight:500;color:#475569;border-radius:.5rem">About</a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="#contact" class="hidden sm:inline-flex btn-primary items-center gap-2" style="padding:.65rem 1.25rem;font-size:.875rem;font-weight:600;border-radius:.75rem">
+          Get in Touch
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+        <button id="mobileMenuBtn" class="lg:hidden" aria-label="Toggle menu" aria-expanded="false" style="padding:.5rem;border-radius:.5rem;color:#334155">
+          <svg id="menuIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="mobileMenu" class="lg:hidden" style="border-top:1px solid rgba(255,255,255,.4)">
+    <div style="padding:.75rem 1rem;display:flex;flex-direction:column;gap:.25rem">
+      <a href="#home" style="padding:.65rem 1rem;font-size:.875rem;font-weight:500;color:#334155;border-radius:.5rem">Home</a>
+      <a href="#domain" style="padding:.65rem 1rem;font-size:.875rem;font-weight:500;color:#334155;border-radius:.5rem">Project Scope</a>
+      <a href="#methodology" style="padding:.65rem 1rem;font-size:.875rem;font-weight:500;color:#334155;border-radius:.5rem">Methodology</a>
+      <a href="#technologies" style="padding:.65rem 1rem;font-size:.875rem;font-weight:500;color:#334155;border-radius:.5rem">Technologies</a>
+      <a href="#milestones" style="padding:.65rem 1rem;font-size:.875rem;font-weight:500;color:#334155;border-radius:.5rem">Timeline</a>
+      <a href="#downloads" style="padding:.65rem 1rem;font-size:.875rem;font-weight:500;color:#334155;border-radius:.5rem">Downloads</a>
+      <a href="#about" style="padding:.65rem 1rem;font-size:.875rem;font-weight:500;color:#334155;border-radius:.5rem">About</a>
+      <a href="#contact" class="btn-primary" style="padding:.65rem 1rem;font-size:.875rem;font-weight:600;border-radius:.5rem;text-align:center;margin-top:.5rem">Get in Touch</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section id="home" style="position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;padding-top:5rem;background:linear-gradient(135deg,#f5f3ff 0%,#faf5ff 35%,#fdf2f8 70%,#fce7f3 100%)">
+
+  <!-- Background image layer -->
+  <div style="position:absolute;inset:0;background-image:none;opacity:0.85"></div>
+
+  <!-- Grid pattern overlay -->
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(99,102,241,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.07) 1px,transparent 1px);background-size:40px 40px;pointer-events:none"></div>
+
+  <!-- Soft glowing blobs -->
+  <div class="animate-blob" style="position:absolute;top:-8rem;left:-8rem;width:520px;height:520px;background:radial-gradient(circle,rgba(167,139,250,.4) 0%,transparent 70%);border-radius:50%;filter:blur(60px);pointer-events:none"></div>
+  <div class="animate-blob" style="position:absolute;top:20%;right:-8rem;width:480px;height:480px;background:radial-gradient(circle,rgba(192,132,252,.35) 0%,transparent 70%);border-radius:50%;filter:blur(60px);animation-delay:-4s;pointer-events:none"></div>
+  <div class="animate-blob" style="position:absolute;bottom:-8rem;left:35%;width:500px;height:500px;background:radial-gradient(circle,rgba(240,171,252,.35) 0%,transparent 70%);border-radius:50%;filter:blur(60px);animation-delay:-8s;pointer-events:none"></div>
+
+  <!-- Floating math symbols -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
+    <span class="math-symbol animate-float" style="font-size:4.5rem;top:12%;left:8%">+</span>
+    <span class="math-symbol animate-float-slow" style="font-size:3.75rem;top:25%;right:12%;animation-delay:-2s">÷</span>
+    <span class="math-symbol animate-float-fast" style="font-size:5rem;bottom:20%;left:15%;animation-delay:-1s">×</span>
+    <span class="math-symbol animate-float" style="font-size:3.75rem;top:55%;right:8%;animation-delay:-3s">−</span>
+    <span class="math-symbol animate-float-slow" style="font-size:3rem;top:70%;right:35%;animation-delay:-4s">7</span>
+    <span class="math-symbol animate-float-fast" style="font-size:3rem;top:15%;left:42%;animation-delay:-2.5s">3</span>
+    <span class="math-symbol animate-float" style="font-size:3.75rem;bottom:8%;right:20%;animation-delay:-5s">=</span>
+    <span class="math-symbol animate-float-slow" style="font-size:2.5rem;top:80%;left:45%;animation-delay:-1.5s">√</span>
+  </div>
+
+  <div style="position:relative;max-width:64rem;margin:0 auto;padding:4rem 1rem;width:100%;z-index:2;text-align:center">
+
+    <!-- Eyebrow -->
+    <div class="animate-fade-in-up" style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-radius:9999px;border:1px solid #e0e7ff;box-shadow:0 4px 12px -2px rgba(99,102,241,.15);margin-bottom:1.75rem">
+      <span class="pulse-dot"></span>
+      <span style="font-size:.7rem;font-weight:700;color:#334155;letter-spacing:.1em;text-transform:uppercase">Smart Learning Platform for Dyscalculia</span>
+    </div>
+
+    <!-- Headline -->
+    <h1 class="animate-fade-in-up" style="font-family:'Sora';font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.08;margin-bottom:1.75rem;animation-delay:.15s">
+      <span class="gradient-text">Adaptive Learning</span><br>
+      <span style="color:#0f172a">Support for</span><br>
+      <span style="color:#0f172a">Children</span><br>
+      <span style="color:#0f172a">with </span><span class="shimmer-text">Dyscalculia</span>
+    </h1>
+
+    <!-- Description -->
+    <p class="animate-fade-in-up" style="font-size:clamp(1rem,1.5vw,1.25rem);color:#475569;max-width:42rem;margin:0 auto 2.5rem;line-height:1.75;animation-delay:.3s">
+      An integrated, data-driven platform that <strong style="color:#4338ca">profiles cognitive skills</strong>, <strong style="color:#7e22ce">personalizes mathematics practice</strong>, <strong style="color:#be185d">adapts game-based learning</strong> in real time, and alerts teachers and parents early when a child needs support.
+    </p>
+
+    <!-- CTA Button -->
+    <div class="animate-fade-in-up" style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-bottom:3rem;animation-delay:.45s">
+      <a href="#about" class="btn-primary" style="display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:1rem 2.25rem;font-weight:600;border-radius:1rem;font-size:1rem">
+        Get Started
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+      <a href="#domain" style="display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:1rem 2.25rem;background:#fff;color:#4338ca;font-weight:600;border-radius:1rem;border:2px solid #e0e7ff;transition:all .3s ease" onmouseover="this.style.borderColor='#a5b4fc';this.style.background='#eef2ff'" onmouseout="this.style.borderColor='#e0e7ff';this.style.background='#fff'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Explore Research
+      </a>
+    </div>
+
+    <!-- Trust badges -->
+    <div class="animate-fade-in-up" style="display:flex;flex-wrap:wrap;gap:2rem;justify-content:center;animation-delay:.6s">
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div style="width:36px;height:36px;border-radius:.6rem;background:#e0e7ff;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <span style="font-size:.875rem;font-weight:500;color:#334155">SLIIT Research</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div style="width:36px;height:36px;border-radius:.6rem;background:#f3e8ff;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        </div>
+        <span style="font-size:.875rem;font-weight:500;color:#334155">4 ML Components</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div style="width:36px;height:36px;border-radius:.6rem;background:#fce7f3;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <span style="font-size:.875rem;font-weight:500;color:#334155">Real Learner Data</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scroll indicator -->
+  <a href="#domain" style="position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;color:#94a3b8;z-index:2;text-decoration:none" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='#94a3b8'" class="hidden md:flex">
+    <span style="font-size:.625rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase">Scroll</span>
+    <div style="width:24px;height:40px;border-radius:9999px;border:2px solid currentColor;display:flex;justify-content:center;padding-top:8px">
+      <div class="animate-bounce-slow" style="width:4px;height:8px;background:currentColor;border-radius:9999px"></div>
+    </div>
+  </a>
+</section>
+
+<!-- ========== STATS BAR ========== -->
+<section style="position:relative;padding:3rem 0;background:linear-gradient(90deg,#4f46e5,#9333ea,#db2777);overflow:hidden">
+  <div class="grid-pattern" style="position:absolute;inset:0;opacity:.15"></div>
+  <div style="position:absolute;top:-5rem;right:-5rem;width:20rem;height:20rem;background:rgba(255,255,255,.1);border-radius:50%;filter:blur(60px)"></div>
+  <div style="position:absolute;bottom:-5rem;left:-5rem;width:20rem;height:20rem;background:rgba(255,255,255,.1);border-radius:50%;filter:blur(60px)"></div>
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    <div style="display:grid;gap:1.5rem;text-align:center;color:#fff" class="grid-cols-2 lg:grid-cols-4">
+      <div class="reveal">
+        <div style="font-family:'Sora';font-size:clamp(2rem,4vw,3rem);font-weight:800;margin-bottom:.25rem">
+          <span class="counter" data-target="7">0</span><span style="font-size:1.5rem">%</span>
+        </div>
+        <p style="color:#c7d2fe;font-size:.875rem;font-weight:500">Children affected globally</p>
+      </div>
+      <div class="reveal" style="transition-delay:.1s">
+        <div style="font-family:'Sora';font-size:clamp(2rem,4vw,3rem);font-weight:800;margin-bottom:.25rem">
+          <span class="counter" data-target="4">0</span>
+        </div>
+        <p style="color:#c7d2fe;font-size:.875rem;font-weight:500">Connected ML components</p>
+      </div>
+      <div class="reveal" style="transition-delay:.2s">
+        <div style="font-family:'Sora';font-size:clamp(2rem,4vw,3rem);font-weight:800;margin-bottom:.25rem">
+          0.<span class="counter" data-target="640">0</span>
+        </div>
+        <p style="color:#c7d2fe;font-size:.875rem;font-weight:500">Avg. Macro F1 (Random Forest)</p>
+      </div>
+      <div class="reveal" style="transition-delay:.3s">
+        <div style="font-family:'Sora';font-size:clamp(2rem,4vw,3rem);font-weight:800;margin-bottom:.25rem">
+          <span class="counter" data-target="20">0</span><span style="font-size:1.5rem">%+</span>
+        </div>
+        <p style="color:#c7d2fe;font-size:.875rem;font-weight:500">Target mastery improvement</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PROJECT SCOPE ========== -->
+<section id="domain" style="position:relative;padding:6rem 0;background:#fff;overflow:hidden">
+  <div style="position:absolute;top:0;right:0;width:50%;height:50%;background:linear-gradient(225deg,#eef2ff,transparent);border-radius:0 0 0 100%"></div>
+  <div style="position:absolute;bottom:0;left:0;width:33%;height:33%;background:linear-gradient(45deg,#faf5ff,transparent);border-radius:0 100% 0 0"></div>
+
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    <div class="reveal" style="text-align:center;margin-bottom:4rem">
+      <span style="display:inline-block;padding:.375rem 1rem;background:#e0e7ff;color:#4338ca;border-radius:9999px;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem">Research Domain</span>
+      <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#0f172a;margin-bottom:1rem">Project <span class="gradient-text">Scope</span></h2>
+      <p style="color:#64748b;max-width:42rem;margin:0 auto;font-size:1.125rem">Understanding dyscalculia, existing digital tools, and the gaps our platform addresses.</p>
+    </div>
+
+    <div style="display:grid;gap:1.5rem;margin-bottom:4rem" class="lg:grid-cols-2">
+      <div class="reveal-left card-lift" style="position:relative;background:linear-gradient(135deg,#eef2ff,#fff);border-radius:1.5rem;padding:2rem;border:1px solid #e0e7ff">
+        <div style="position:absolute;top:1.5rem;right:1.5rem;width:48px;height:48px;background:#4f46e5;color:#fff;border-radius:1rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:1.125rem;box-shadow:0 10px 20px -8px rgba(79,70,229,.4)">1</div>
+        <div style="width:56px;height:56px;background:#fff;border-radius:1rem;display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;border:1px solid #e0e7ff">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </div>
+        <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin-bottom:1rem">Dyscalculia and Its Impact</h3>
+        <p style="color:#475569;line-height:1.7">Developmental dyscalculia is a specific learning difficulty that affects number understanding, arithmetic and mathematical reasoning. Global estimates suggest it affects roughly <strong style="color:#4338ca">3–7% of school-age children</strong>, linked to weak number sense, working memory, attention and processing speed [1]–[3]. In Sri Lanka, limited awareness and few diagnostic tools mean many children are identified late.</p>
+      </div>
+
+      <div class="reveal-right card-lift" style="position:relative;background:linear-gradient(135deg,#faf5ff,#fff);border-radius:1.5rem;padding:2rem;border:1px solid #f3e8ff">
+        <div style="position:absolute;top:1.5rem;right:1.5rem;width:48px;height:48px;background:#9333ea;color:#fff;border-radius:1rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:1.125rem;box-shadow:0 10px 20px -8px rgba(147,51,234,.4)">2</div>
+        <div style="width:56px;height:56px;background:#fff;border-radius:1rem;display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;border:1px solid #f3e8ff">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin-bottom:1rem">Digital Tools for Dyscalculia</h3>
+        <p style="color:#475569;line-height:1.7">Programs such as <strong style="color:#7e22ce">Calcularis</strong> [12] and <strong style="color:#7e22ce">The Number Race</strong> [11], and apps like Let's Learn Math and EZMath, have shown benefits. However, most focus on remediation or one-time screening and provide limited continuous analytics for teachers and parents [4].</p>
+      </div>
+    </div>'
+    
+    <!-- ===== KEY REFERENCES (ENHANCED WITH COLOR) ===== -->
+<div class="reveal" style="position:relative;background:linear-gradient(135deg,#ecfdf5 0%,#f0fdfa 50%,#f7fee7 100%);border-radius:1.5rem;padding:2.5rem;margin-bottom:4rem;overflow:hidden;box-shadow:0 20px 40px -20px rgba(22,163,74,.25);border:1px solid rgba(22,163,74,.15)">
+
+  <!-- Decorative background elements -->
+  <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:radial-gradient(circle,rgba(22,163,74,.15) 0%,transparent 70%);border-radius:50%;pointer-events:none"></div>
+  <div style="position:absolute;bottom:-80px;left:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(132,204,22,.15) 0%,transparent 70%);border-radius:50%;pointer-events:none"></div>
+
+  <div class="grid-pattern" style="position:absolute;inset:0;opacity:.15;pointer-events:none"></div>
+
+  <div style="position:relative;z-index:2">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:.85rem;margin-bottom:2rem">
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,#16a34a,#059669);border-radius:.875rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(22,163,74,.5)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 style="font-family:'Sora';font-size:1.35rem;font-weight:800;color:#065f46;letter-spacing:.01em;margin:0">
+          Key References <span style="font-weight:600;color:#16a34a">(from paper)</span>
+        </h3>
+        <p style="font-size:.8rem;color:#047857;margin:.15rem 0 0;font-weight:500">Cited sources underpinning our research foundation</p>
+      </div>
+    </div>
+
+    <!-- References Grid -->
+    <div style="display:grid;gap:.875rem" class="lg:grid-cols-2">
+
+      <!-- Ref 1 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #16a34a;box-shadow:0 2px 8px -2px rgba(22,163,74,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#166534">[1]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            S. Haberstroh and G. Schulte-Körne, "The Diagnosis and Treatment of Dyscalculia," <em style="color:#065f46;font-style:italic;font-weight:500">Dtsch. Arztebl. Int.</em>, 2019.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 2 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #059669;box-shadow:0 2px 8px -2px rgba(5,150,105,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#065f46">[2]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            A. Dowker, "Developmental Dyscalculia in Relation to Individual Differences in Mathematical Abilities," <em style="color:#065f46;font-style:italic;font-weight:500">Children</em>, vol. 11, no. 6, 2024.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 3 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #10b981;box-shadow:0 2px 8px -2px rgba(16,185,129,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#d1fae5,#6ee7b7);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#065f46">[3]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            B. Butterworth, S. Varma and D. Laurillard, "Dyscalculia: From Brain to Education," <em style="color:#065f46;font-style:italic;font-weight:500">Science</em>, vol. 332, 2011.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 4 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #14b8a6;box-shadow:0 2px 8px -2px rgba(20,184,166,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#ccfbf1,#99f6e4);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#115e59">[4]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            S. Bhushan et al., "AI-Enhanced Dyscalculia Screening: A Survey of Methods and Applications for Children," <em style="color:#115e59;font-style:italic;font-weight:500">Diagnostics</em>, vol. 14, 2024.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 11 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #84cc16;box-shadow:0 2px 8px -2px rgba(132,204,22,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#ecfccb,#d9f99d);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#3f6212">[11]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            A. J. Wilson et al., "An open trial assessment of The Number Race," <em style="color:#3f6212;font-style:italic;font-weight:500">Behavioral and Brain Functions</em>, vol. 2, 2006.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 12 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #65a30d;box-shadow:0 2px 8px -2px rgba(101,163,13,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#ecfccb,#bef264);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#3f6212">[12]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            T. Kaser et al., "Design and evaluation of the computer-based training program Calcularis," <em style="color:#3f6212;font-style:italic;font-weight:500">Frontiers in Psychology</em>, vol. 4, 2013.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 19 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #0891b2;box-shadow:0 2px 8px -2px rgba(8,145,178,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#cffafe,#a5f3fc);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#155e75">[19]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            I. Šarić-Grgić, A. Grubišić and A. Gašpar, "Twenty-Five Years of Bayesian Knowledge Tracing," <em style="color:#155e75;font-style:italic;font-weight:500">User Modeling and User-Adapted Interaction</em>, 2024.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 20 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #0284c7;box-shadow:0 2px 8px -2px rgba(2,132,199,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#075985">[20]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            S. Doroudi, V. Aleven and E. Brunskill, "Where's the Reward? A Review of Reinforcement Learning for Instructional Sequencing," <em style="color:#075985;font-style:italic;font-weight:500">IJAIED</em>, 2019.
+          </p>
+        </div>
+      </div>
+
+      <!-- Ref 32 -->
+      <div class="ref-card" style="display:flex;gap:1rem;align-items:flex-start;background:#fff;border-radius:.875rem;padding:1rem 1.15rem;border-left:4px solid #7c3aed;box-shadow:0 2px 8px -2px rgba(124,58,237,.1);transition:all .3s ease">
+        <div style="flex-shrink:0;width:40px;height:40px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.85rem;color:#5b21b6">[32]</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-size:.85rem;line-height:1.65;color:#1e293b;margin:0">
+            G. Akçapinar, A. Altun and P. Aşkar, "Using learning analytics to develop early-warning system for at-risk students," <em style="color:#5b21b6;font-style:italic;font-weight:500">Int. J. Educ. Technol. High. Educ.</em>, vol. 16, 2019.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer note -->
+    <div style="margin-top:1.75rem;padding-top:1.25rem;border-top:1px dashed rgba(22,163,74,.3);display:flex;align-items:center;gap:.6rem;justify-content:center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p style="font-size:.75rem;color:#047857;font-weight:600;margin:0;letter-spacing:.02em">
+        9 citations · All references verified from the research paper
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Hover effect styles (add to your <style> block if not already there) -->
+<style>
+  .ref-card:hover {
+    transform: translateY(-3px) translateX(4px);
+    box-shadow: 0 12px 24px -8px rgba(22,163,74,.25) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%) !important;
+  }
+</style>
+
+    <!-- Research Gap -->
+    <div class="reveal" style="position:relative;background:#0f172a;border-radius:1.5rem;padding:2.5rem;margin-bottom:4rem;overflow:hidden">
+      <div class="grid-pattern" style="position:absolute;inset:0;opacity:.1"></div>
+      <div style="position:absolute;top:-5rem;right:-5rem;width:20rem;height:20rem;background:rgba(239,68,68,.2);border-radius:50%;filter:blur(60px)"></div>
+      <div style="position:relative">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:2rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#ef4444,#db2777);border-radius:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(239,68,68,.4)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div>
+            <h3 style="font-family:'Sora';font-size:clamp(1.5rem,3vw,1.875rem);font-weight:800;color:#fff">Research Gap</h3>
+            <p style="color:#94a3b8;font-size:.875rem">Identified limitations in existing digital support</p>
+          </div>
+        </div>
+        <div style="display:grid;gap:.75rem" class="md:grid-cols-2">
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">Most systems judge learners only by correct/incorrect answers, ignoring response time, attempts and error patterns.</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">Cognitive abilities are rarely profiled from real-time interaction data.</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">Learner profiling and instruction are usually separate; assessment is one-off.</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">Many educational games are static and do not adapt difficulty, rewards or pacing.</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">Feedback is often generic, marking answers wrong without addressing misconceptions.</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">Components work in isolation; combined signal is never used for early warning.</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">Teachers and parents get scores but little interpretable insight into difficulty evolution.</p>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:flex-start">
+            <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.2);display:flex;align-items:center;justify-content:center;margin-top:2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <p style="color:#cbd5e1;font-size:.875rem;line-height:1.7">No unified system joining cognitive profiling, mastery estimation, game adaptation and risk prediction.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Problem & Solution -->
+    <div style="display:grid;gap:1.5rem;margin-bottom:4rem" class="lg:grid-cols-2">
+      <div class="reveal-left" style="background:linear-gradient(135deg,#fef2f2,#fff1f2);border:1px solid #fecaca;border-radius:1.5rem;padding:2rem;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;right:0;width:10rem;height:10rem;background:rgba(254,202,202,.4);border-radius:50%;filter:blur(40px)"></div>
+        <div style="position:relative">
+          <div style="display:inline-flex;align-items:center;gap:.5rem;padding:.25rem .75rem;background:#fee2e2;border-radius:9999px;margin-bottom:1rem">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span style="font-size:.7rem;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.1em">The Problem</span>
+          </div>
+          <h3 style="font-family:'Sora';font-size:1.5rem;font-weight:800;color:#0f172a;margin-bottom:1rem">Same practice for different needs</h3>
+          <p style="color:#334155;line-height:1.7">Children with dyscalculia receive the same practice as their classmates even though their difficulties differ. Teachers have limited time to find the exact reason behind each mistake, and parents have little guidance. Existing tools are fragmented, adapt only on scores, and rarely warn adults before a child falls far behind.</p>
+        </div>
+      </div>
+
+      <div class="reveal-right" style="background:linear-gradient(135deg,#ecfdf5,#f0fdf4);border:1px solid #a7f3d0;border-radius:1.5rem;padding:2rem;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;right:0;width:10rem;height:10rem;background:rgba(167,243,208,.4);border-radius:50%;filter:blur(40px)"></div>
+        <div style="position:relative">
+          <div style="display:inline-flex;align-items:center;gap:.5rem;padding:.25rem .75rem;background:#d1fae5;border-radius:9999px;margin-bottom:1rem">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <span style="font-size:.7rem;font-weight:700;color:#047857;text-transform:uppercase;letter-spacing:.1em">Our Solution</span>
+          </div>
+          <h3 style="font-family:'Sora';font-size:1.5rem;font-weight:800;color:#0f172a;margin-bottom:1rem">One connected learning cycle</h3>
+          <p style="color:#334155;line-height:1.7;margin-bottom:1.25rem">A research-backed platform of four connected components that form one continuous cycle:</p>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.375rem;font-size:.7rem;font-weight:700;color:#065f46">
+            <span style="background:#d1fae5;padding:.375rem .625rem;border-radius:.5rem">Learner Interaction</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
+            <span style="background:#d1fae5;padding:.375rem .625rem;border-radius:.5rem">Data Collection</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
+            <span style="background:#d1fae5;padding:.375rem .625rem;border-radius:.5rem">Profiling & Estimation</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
+            <span style="background:#d1fae5;padding:.375rem .625rem;border-radius:.5rem">Adaptive Games</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
+            <span style="background:#d1fae5;padding:.375rem .625rem;border-radius:.5rem">Risk Prediction</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
+            <span style="background:#059669;color:#fff;padding:.375rem .625rem;border-radius:.5rem">Intervention</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Research Objectives -->
+    <div class="reveal" style="text-align:center;margin-bottom:2.5rem">
+      <h3 style="font-family:'Sora';font-size:clamp(1.5rem,3vw,2rem);font-weight:800;color:#0f172a">Research <span class="gradient-text">Objectives</span></h3>
+    </div>
+    <div style="display:grid;gap:1.25rem" class="md:grid-cols-2 lg:grid-cols-4">
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;position:relative;overflow:hidden">
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 10px 20px -8px rgba(99,102,241,.5)">
+          <span style="color:#fff;font-family:'Sora';font-weight:800">1</span>
+        </div>
+        <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;margin-bottom:.5rem">Profile Cognitive Skills</h4>
+        <p style="font-size:.875rem;color:#475569;line-height:1.6">A supervised ML model analyses accuracy, response time and attempts to classify four cognitive dimensions.</p>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.1s">
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,#a855f7,#9333ea);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 10px 20px -8px rgba(168,85,247,.5)">
+          <span style="color:#fff;font-family:'Sora';font-weight:800">2</span>
+        </div>
+        <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;margin-bottom:.5rem">Personalize Math Learning</h4>
+        <p style="font-size:.875rem;color:#475569;line-height:1.6">BKT estimates mastery after every interaction, adjusts difficulty and provides context-aware hints — target 20%+ gain.</p>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.2s">
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,#ec4899,#db2777);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 10px 20px -8px rgba(236,72,153,.5)">
+          <span style="color:#fff;font-family:'Sora';font-weight:800">3</span>
+        </div>
+        <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;margin-bottom:.5rem">Adapt Game-Based Learning</h4>
+        <p style="font-size:.875rem;color:#475569;line-height:1.6">Dynamic difficulty, content, pacing and rewards using a rule-based model benchmarked against RL.</p>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.3s">
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 10px 20px -8px rgba(245,158,11,.5)">
+          <span style="color:#fff;font-family:'Sora';font-weight:800">4</span>
+        </div>
+        <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;margin-bottom:.5rem">Predict Learning Risk</h4>
+        <p style="font-size:.875rem;color:#475569;line-height:1.6">Group learners into four difficulty profiles with K-Means and GMM; predict Low, Moderate or High risk with Logistic Regression.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== METHODOLOGY ========== -->
+<section id="methodology" style="position:relative;padding:6rem 0;background:linear-gradient(180deg,#f8fafc,#fff);overflow:hidden">
+  <div class="dot-pattern" style="position:absolute;inset:0;opacity:.4"></div>
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    <div class="reveal" style="text-align:center;margin-bottom:4rem">
+      <span style="display:inline-block;padding:.375rem 1rem;background:#f3e8ff;color:#7e22ce;border-radius:9999px;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem">Our Approach</span>
+      <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#0f172a;margin-bottom:1rem">Methodology</h2>
+      <p style="color:#64748b;max-width:42rem;margin:0 auto;font-size:1.125rem">A systematic Design Science Research approach to building an adaptive learning platform.</p>
+    </div>
+
+    <div style="display:grid;gap:1.25rem;margin-bottom:6rem" class="md:grid-cols-2 lg:grid-cols-3">
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(99,102,241,.4)">
+            <span style="color:#fff;font-family:'Sora';font-weight:800;font-size:1.125rem">1</span>
+          </div>
+          <h3 style="font-family:'Sora';font-weight:700;color:#0f172a">Requirement Gathering</h3>
+        </div>
+        <p style="font-size:.875rem;color:#475569;line-height:1.7">Requirement analysis and literature review of existing dyscalculia tools; identification of needs for Grade 2–3 students, teachers, parents and administrators.</p>
+        <span style="display:inline-block;margin-top:.75rem;font-size:.7rem;font-weight:700;color:#4f46e5;background:#eef2ff;padding:.25rem .625rem;border-radius:9999px">Jan–Feb 2026</span>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.05s">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#818cf8,#6366f1);border-radius:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(99,102,241,.4)">
+            <span style="color:#fff;font-family:'Sora';font-weight:800;font-size:1.125rem">2</span>
+          </div>
+          <h3 style="font-family:'Sora';font-weight:700;color:#0f172a">Data Collection</h3>
+        </div>
+        <p style="font-size:.875rem;color:#475569;line-height:1.7">Learner responses, correctness, response time, attempts, error patterns and engagement collected at <strong style="color:#4338ca">Sound Mind Academy, Koswaththa</strong>, with parental consent and anonymized IDs.</p>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.1s">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#a855f7,#9333ea);border-radius:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(168,85,247,.4)">
+            <span style="color:#fff;font-family:'Sora';font-weight:800;font-size:1.125rem">3</span>
+          </div>
+          <h3 style="font-family:'Sora';font-weight:700;color:#0f172a">Data Preprocessing</h3>
+        </div>
+        <p style="font-size:.875rem;color:#475569;line-height:1.7">Handled missing records, removed duplicates, normalized values and extracted features such as accuracy, response time, error patterns, progression and engagement.</p>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.15s">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#ec4899,#db2777);border-radius:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(236,72,153,.4)">
+            <span style="color:#fff;font-family:'Sora';font-weight:800;font-size:1.125rem">4</span>
+          </div>
+          <h3 style="font-family:'Sora';font-weight:700;color:#0f172a">Model Development</h3>
+        </div>
+        <p style="font-size:.875rem;color:#475569;line-height:1.7">Decision Tree, Random Forest and Gradient Boosting for profiling; BKT for mastery; rule-based and RL for games; K-Means, GMM and Logistic Regression for analytics.</p>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.2s">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(245,158,11,.4)">
+            <span style="color:#fff;font-family:'Sora';font-weight:800;font-size:1.125rem">5</span>
+          </div>
+          <h3 style="font-family:'Sora';font-weight:700;color:#0f172a">System Integration</h3>
+        </div>
+        <p style="font-size:.875rem;color:#475569;line-height:1.7">Mobile learner app, FastAPI backend, shared learner database and APIs connecting the four components.</p>
+      </div>
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;transition-delay:.25s">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#10b981,#059669);border-radius:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(16,185,129,.4)">
+            <span style="color:#fff;font-family:'Sora';font-weight:800;font-size:1.125rem">6</span>
+          </div>
+          <h3 style="font-family:'Sora';font-weight:700;color:#0f172a">Testing & Validation</h3>
+        </div>
+        <p style="font-size:.875rem;color:#475569;line-height:1.7">Macro F1, mastery progression, challenge-fit, engagement, Silhouette Score and risk metrics; pre/post-test comparison; teacher and student feedback.</p>
+      </div>
+    </div>
+
+    <!-- Core Components -->
+    <div class="reveal" style="text-align:center;margin-bottom:2.5rem">
+      <h3 style="font-family:'Sora';font-size:clamp(1.5rem,3vw,2rem);font-weight:800;color:#0f172a">Core <span class="gradient-text">Components</span></h3>
+      <p style="color:#64748b;margin-top:.5rem">Six interconnected modules powering the platform</p>
+    </div>
+    <div style="display:grid;gap:1.25rem;margin-bottom:6rem" class="md:grid-cols-2 lg:grid-cols-3">
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#6366f1);box-shadow:0 20px 40px -12px rgba(79,70,229,.4)">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <div style="width:44px;height:44px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h4 style="font-family:'Sora';font-weight:700;font-size:1.125rem;margin-bottom:.5rem">Cognitive Skill Profiling</h4>
+          <p style="color:rgba(255,255,255,.8);font-size:.875rem;line-height:1.6;margin-bottom:1rem">Analyses accuracy, response time and attempts to classify four cognitive dimensions.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:.375rem;font-size:.625rem;font-weight:600">
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Random Forest</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Feature Extraction</span>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 20px 40px -12px rgba(124,58,237,.4);transition-delay:.1s">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <div style="width:44px;height:44px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <h4 style="font-family:'Sora';font-weight:700;font-size:1.125rem;margin-bottom:.5rem">Personalized Math Engine</h4>
+          <p style="color:rgba(255,255,255,.8);font-size:.875rem;line-height:1.6;margin-bottom:1rem">Tracks mastery with BKT, picks next activity and adjusts difficulty.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:.375rem;font-size:.625rem;font-weight:600">
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">BKT</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Adaptive Learning</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Hint API</span>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#db2777,#ec4899);box-shadow:0 20px 40px -12px rgba(219,39,119,.4);transition-delay:.2s">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <div style="width:44px;height:44px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h4 style="font-family:'Sora';font-weight:700;font-size:1.125rem;margin-bottom:.5rem">Adaptive Game Engine</h4>
+          <p style="color:rgba(255,255,255,.8);font-size:.875rem;line-height:1.6;margin-bottom:1rem">Counting, comparison & arithmetic games with points, badges and adaptive difficulty.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:.375rem;font-size:.625rem;font-weight:600">
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Rule-Based</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">RL</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Gamification</span>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#d97706,#f59e0b);box-shadow:0 20px 40px -12px rgba(217,119,6,.4);transition-delay:.3s">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <div style="width:44px;height:44px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <h4 style="font-family:'Sora';font-weight:700;font-size:1.125rem;margin-bottom:.5rem">Early Warning System</h4>
+          <p style="color:rgba(255,255,255,.8);font-size:.875rem;line-height:1.6;margin-bottom:1rem">Clusters learners into four profiles, then predicts Low/Moderate/High risk.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:.375rem;font-size:.625rem;font-weight:600">
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">K-Means</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">GMM</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Logistic Regression</span>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#0d9488,#14b8a6);box-shadow:0 20px 40px -12px rgba(13,148,136,.4);transition-delay:.4s">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <div style="width:44px;height:44px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h4 style="font-family:'Sora';font-weight:700;font-size:1.125rem;margin-bottom:.5rem">Hint & Feedback Module</h4>
+          <p style="color:rgba(255,255,255,.8);font-size:.875rem;line-height:1.6;margin-bottom:1rem">Wrong answers trigger an external API that returns simple, context-aware hints.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:.375rem;font-size:.625rem;font-weight:600">
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Hint API</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Real-time</span>
+          </div>
+        </div>
+      </div>
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#334155,#475569);box-shadow:0 20px 40px -12px rgba(51,65,85,.4);transition-delay:.5s">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <div style="width:44px;height:44px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+          </div>
+          <h4 style="font-family:'Sora';font-weight:700;font-size:1.125rem;margin-bottom:.5rem">Backend & Database</h4>
+          <p style="color:rgba(255,255,255,.8);font-size:.875rem;line-height:1.6;margin-bottom:1rem">Central service layer with anonymized identifiers and role-based access.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:.375rem;font-size:.625rem;font-weight:600">
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">FastAPI</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">Supabase</span>
+            <span style="background:rgba(255,255,255,.2);padding:.25rem .5rem;border-radius:9999px">REST APIs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality Assurance -->
+    <div class="reveal" style="position:relative;background:#0f172a;border-radius:1.5rem;padding:3rem;margin-bottom:6rem;overflow:hidden">
+      <div class="grid-pattern" style="position:absolute;inset:0;opacity:.1"></div>
+      <div style="position:absolute;top:-5rem;left:-5rem;width:20rem;height:20rem;background:rgba(99,102,241,.2);border-radius:50%;filter:blur(60px)"></div>
+      <div style="position:absolute;bottom:-5rem;right:-5rem;width:20rem;height:20rem;background:rgba(168,85,247,.2);border-radius:50%;filter:blur(60px)"></div>
+      <div style="position:relative">
+        <div style="text-align:center;margin-bottom:2.5rem">
+          <h3 style="font-family:'Sora';font-size:clamp(1.5rem,3vw,2rem);font-weight:800;color:#fff;margin-bottom:.5rem">Quality Assurance</h3>
+          <p style="color:#94a3b8">Rigorous metrics, testing and ethical safeguards</p>
+        </div>
+        <div style="display:grid;gap:1.25rem" class="md:grid-cols-3">
+          <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:1.5rem">
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#818cf8,#4f46e5);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 10px 20px -8px rgba(99,102,241,.5)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <h4 style="font-weight:700;color:#fff;margin-bottom:.75rem">Performance Metrics</h4>
+            <ul style="font-size:.875rem;color:#cbd5e1;list-style:none;display:flex;flex-direction:column;gap:.5rem">
+              <li><strong style="color:#fff">Classification:</strong> Accuracy, Precision, Recall, Macro F1</li>
+              <li><strong style="color:#fff">Learning:</strong> Mastery progression, error reduction (≥20%)</li>
+              <li><strong style="color:#fff">Games:</strong> Completion, challenge-fit, engagement, safety</li>
+              <li><strong style="color:#fff">Analytics:</strong> Silhouette, Davies-Bouldin, F2, AUC-ROC</li>
+            </ul>
+          </div>
+          <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:1.5rem">
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#c084fc,#9333ea);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 10px 20px -8px rgba(168,85,247,.5)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h4 style="font-weight:700;color:#fff;margin-bottom:.75rem">User Testing & Validation</h4>
+            <ul style="font-size:.875rem;color:#cbd5e1;list-style:none;display:flex;flex-direction:column;gap:.5rem">
+              <li>Teacher and therapist questionnaires (5-point Likert scale)</li>
+              <li>Simple smiley or star feedback from students</li>
+              <li>Observation of system usage data</li>
+              <li>Pre-test and post-test comparison</li>
+            </ul>
+          </div>
+          <div style="background:rgba(255,255,255,.05);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:1.5rem">
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#34d399,#059669);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;box-shadow:0 10px 20px -8px rgba(16,185,129,.5)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h4 style="font-weight:700;color:#fff;margin-bottom:.75rem">Ethics & Privacy</h4>
+            <ul style="font-size:.875rem;color:#cbd5e1;list-style:none;display:flex;flex-direction:column;gap:.5rem">
+              <li>Parental informed consent</li>
+              <li>Voluntary participation</li>
+              <li>Anonymized learner identifiers</li>
+              <li>Secure storage and role-based access</li>
+              <li>Data used only for academic research</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="reveal" style="text-align:center;margin-bottom:2.5rem">
+      <h3 style="font-family:'Sora';font-size:clamp(1.5rem,3vw,2rem);font-weight:800;color:#0f172a">Benchmark <span class="gradient-text">Results</span></h3>
+      <p style="color:#64748b;margin-top:.5rem;max-width:42rem;margin-left:auto;margin-right:auto">Results reported in the research paper. The integrated, real-learner evaluation is in progress.</p>
+    </div>
+
+    <div style="display:grid;gap:1.5rem;margin-bottom:1.5rem" class="lg:grid-cols-2">
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;border:1px solid #f1f5f9;overflow:hidden;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+        <div style="padding:1rem 1.5rem;background:linear-gradient(90deg,#eef2ff,#faf5ff);border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h4 style="font-family:'Sora';font-weight:700;color:#0f172a">Cognitive Profiling</h4>
+            <p style="font-size:.75rem;color:#64748b">Macro F1 scores across four cognitive dimensions</p>
+          </div>
+          <span style="font-size:.7rem;font-weight:700;color:#4338ca;background:#e0e7ff;padding:.25rem .625rem;border-radius:9999px">Table 1</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Model</th><th>Memory</th><th>Attention</th><th>Number Sense</th><th>Proc. Speed</th><th>Average</th></tr></thead>
+            <tbody>
+              <tr class="highlight"><td>Random Forest <span style="font-size:.6rem;background:#c7d2fe;color:#3730a3;padding:.1rem .375rem;border-radius:.25rem;margin-left:.375rem;font-weight:700">SELECTED</span></td><td>0.584</td><td>0.627</td><td>0.604</td><td>0.744</td><td>0.640</td></tr>
+              <tr><td>Decision Tree <span style="color:#94a3b8;font-size:.75rem">(baseline)</span></td><td>0.478</td><td>0.555</td><td>0.605</td><td>0.739</td><td>0.594</td></tr>
+              <tr><td>Gradient Boosting</td><td>0.486</td><td>0.645</td><td>0.515</td><td>0.771</td><td>0.604</td></tr>
+              <tr><td>Fine-Tuned Random Forest</td><td>0.525</td><td>0.658</td><td>0.567</td><td>0.793</td><td>0.636</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="reveal card-lift" style="background:#fff;border-radius:1rem;border:1px solid #f1f5f9;overflow:hidden;box-shadow:0 4px 12px -2px rgba(0,0,0,.05);transition-delay:.1s">
+        <div style="padding:1rem 1.5rem;background:linear-gradient(90deg,#fdf2f8,#fce7f3);border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h4 style="font-family:'Sora';font-weight:700;color:#0f172a">Adaptive Games</h4>
+            <p style="font-size:.75rem;color:#64748b">Rule-based vs Reinforcement Learning</p>
+          </div>
+          <span style="font-size:.7rem;font-weight:700;color:#9d174d;background:#fce7f3;padding:.25rem .625rem;border-radius:9999px">Table 2</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Model</th><th>Completion</th><th>Challenge-fit</th><th>Engagement</th><th>Safety & Stability</th></tr></thead>
+            <tbody>
+              <tr class="highlight"><td>Rule-based <span style="font-size:.6rem;background:#fbcfe8;color:#831843;padding:.1rem .375rem;border-radius:.25rem;margin-left:.375rem;font-weight:700">SELECTED</span></td><td>55.6%</td><td>61.2%</td><td>58.8%</td><td>72.4%</td></tr>
+              <tr><td>Reinforcement Learning</td><td>47.3%</td><td>63.2%</td><td>50.3%</td><td>63.5%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal card-lift" style="background:#fff;border-radius:1rem;border:1px solid #f1f5f9;overflow:hidden;box-shadow:0 4px 12px -2px rgba(0,0,0,.05);margin-bottom:1rem">
+      <div style="padding:1rem 1.5rem;background:linear-gradient(90deg,#fffbeb,#fef3c7);border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h4 style="font-family:'Sora';font-weight:700;color:#0f172a">Early Warning</h4>
+          <p style="font-size:.75rem;color:#64748b">Risk prediction model comparison</p>
+        </div>
+        <span style="font-size:.7rem;font-weight:700;color:#92400e;background:#fef3c7;padding:.25rem .625rem;border-radius:9999px">Table 3</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>Model</th><th>Macro F1</th><th>Balanced Accuracy</th><th>F2 Score</th></tr></thead>
+          <tbody>
+            <tr class="highlight"><td>Logistic Regression (Arm A) <span style="font-size:.6rem;background:#fde68a;color:#78350f;padding:.1rem .375rem;border-radius:.25rem;margin-left:.375rem;font-weight:700">SELECTED</span></td><td>0.424</td><td>0.477</td><td>0.689</td></tr>
+            <tr><td>Random Forest</td><td>0.426</td><td>0.479</td><td>0.729</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:1rem 1.5rem;background:rgba(255,251,235,.5);border-top:1px solid #fef3c7">
+        <p style="font-size:.75rem;color:#78350f"><strong>Note:</strong> Logistic Regression was chosen over the marginally higher Random Forest for its interpretable coefficients. The personalized math engine has no reported numbers yet — evaluation in progress, target at least 20% improvement in skill mastery.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TECHNOLOGIES ========== -->
+<section id="technologies" style="position:relative;padding:6rem 0;background:#fff;overflow:hidden">
+  <div style="position:absolute;top:0;right:0;width:33%;height:33%;background:linear-gradient(225deg,#eef2ff,transparent);border-radius:0 0 0 100%"></div>
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    <div class="reveal" style="text-align:center;margin-bottom:4rem">
+      <span style="display:inline-block;padding:.375rem 1rem;background:#fce7f3;color:#9d174d;border-radius:9999px;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem">Our Tech Stack</span>
+      <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#0f172a;margin-bottom:1rem">Technologies</h2>
+      <p style="color:#64748b;max-width:42rem;margin:0 auto;font-size:1.125rem">A combination of ML, web and mobile technologies working together.</p>
+    </div>
+
+    <div style="display:grid;gap:1.5rem" class="md:grid-cols-2">
+      <div class="reveal-left card-lift" style="background:linear-gradient(135deg,#eef2ff,#fff);border-radius:1.5rem;padding:2rem;border:1px solid #e0e7ff">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:.75rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(99,102,241,.5)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a">AI & Machine Learning</h3>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#4338ca">Python</strong> — ML development and data processing</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#4338ca">Scikit-learn</strong> — Decision Tree, Random Forest, Gradient Boosting, K-Means, GMM, Logistic Regression</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#4338ca">TensorFlow</strong> — Deep learning and Reinforcement Learning</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#4338ca">Bayesian Knowledge Tracing</strong> — Mastery estimation</p>
+        </div>
+      </div>
+
+      <div class="reveal-right card-lift" style="background:linear-gradient(135deg,#faf5ff,#fff);border-radius:1.5rem;padding:2rem;border:1px solid #f3e8ff">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#a855f7,#9333ea);border-radius:.75rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(168,85,247,.5)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+          </div>
+          <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a">Data Processing & Storage</h3>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#7e22ce">Pandas & NumPy</strong> — Cleaning, feature engineering</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#7e22ce">Supabase / PostgreSQL</strong> — Learner data, sessions, risk predictions</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#7e22ce">REST APIs</strong> — Data flow between components</p>
+        </div>
+      </div>
+
+      <div class="reveal-left card-lift" style="background:linear-gradient(135deg,#fdf2f8,#fff);border-radius:1.5rem;padding:2rem;border:1px solid #fce7f3">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#ec4899,#db2777);border-radius:.75rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(236,72,153,.5)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          </div>
+          <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a">Web & Mobile Platform</h3>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#be185d">React Native with Expo</strong> — Learner mobile app</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#be185d">React.js</strong> — Web interface</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#be185d">Phaser.js & HTML5 Canvas</strong> — Educational games</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#be185d">FastAPI</strong> — Backend services</p>
+        </div>
+      </div>
+
+      <div class="reveal-right card-lift" style="background:linear-gradient(135deg,#fffbeb,#fff);border-radius:1.5rem;padding:2rem;border:1px solid #fef3c7">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
+          <div style="width:48px;height:48px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:.75rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -8px rgba(245,158,11,.5)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a">Design & Development Tools</h3>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#b45309">Figma</strong> — UI/UX design</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#b45309">Draw.io</strong> — Architecture diagrams</p>
+          <p style="font-size:.875rem;color:#334155"><strong style="color:#b45309">Visual Studio Code</strong> — Development</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;gap:1.25rem;margin-top:2.5rem" class="md:grid-cols-3">
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#6366f1);box-shadow:0 20px 40px -12px rgba(79,70,229,.4)">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <h4 style="font-family:'Sora';font-weight:700;margin-bottom:.25rem">Machine Learning</h4>
+          <p style="font-size:.875rem;color:rgba(255,255,255,.85)">Models that profile skills, estimate mastery, adapt games and predict risk.</p>
+        </div>
+      </div>
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 20px 40px -12px rgba(124,58,237,.4);transition-delay:.1s">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <h4 style="font-family:'Sora';font-weight:700;margin-bottom:.25rem">Learner Platform</h4>
+          <p style="font-size:.875rem;color:rgba(255,255,255,.85)">Child-friendly mobile and web interface with clear visuals and minimal text.</p>
+        </div>
+      </div>
+      <div class="reveal-scale" style="position:relative;border-radius:1rem;padding:1.5rem;color:#fff;overflow:hidden;background:linear-gradient(135deg,#db2777,#ec4899);box-shadow:0 20px 40px -12px rgba(219,39,119,.4);transition-delay:.2s">
+        <div class="grid-pattern" style="position:absolute;inset:0;opacity:.2"></div>
+        <div style="position:relative">
+          <h4 style="font-family:'Sora';font-weight:700;margin-bottom:.25rem">Data Management</h4>
+          <p style="font-size:.875rem;color:rgba(255,255,255,.85)">Secure, anonymized storage and role-based access for teachers and parents.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TIMELINE ========== -->
+<section id="milestones" style="position:relative;padding:6rem 0;background:linear-gradient(180deg,#f8fafc,#fff);overflow:hidden">
+  <div class="dot-pattern" style="position:absolute;inset:0;opacity:.3"></div>
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    
+    <!-- Section Header -->
+    <div class="reveal" style="text-align:center;margin-bottom:4rem">
+      <span style="display:inline-block;padding:.375rem 1rem;background:#e0e7ff;color:#4338ca;border-radius:9999px;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem">Official RP Timeline</span>
+      <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#0f172a;margin-bottom:1rem">Project <span class="gradient-text">Timeline</span></h2>
+      <p style="color:#64748b;max-width:42rem;margin:0 auto;font-size:1.125rem">Our journey from proposal to final submission, following the official 2026 Regular Batch timeline.</p>
+    </div>
+
+    <!-- Timeline Container -->
+    <div style="position:relative;max-width:56rem;margin:0 auto" id="timeline">
+      
+      <!-- Center Line -->
+      <div style="position:absolute;left:24px;top:0;bottom:0;width:4px;border-radius:9999px;opacity:.3" class="timeline-progress md:left-1/2" style="transform:translateX(-50%)"></div>
+
+      <!-- Item 1: Proposal Submission -->
+      <div class="reveal" style="position:relative;display:flex;align-items:flex-start;margin-bottom:3rem">
+        <div style="position:absolute;left:24px;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(-50%);margin-top:6px;z-index:10;background:#10b981" class="md:left-1/2"></div>
+        <div style="margin-left:3.5rem;width:100%" class="md:ml-0 md:w-1/2 md:pr-14 md:text-right">
+          <div class="card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+            <span style="font-size:.8rem;font-weight:800;color:#4f46e5;letter-spacing:.08em;text-transform:uppercase">March 2026</span>
+            <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin:.5rem 0">Proposal Submission</h3>
+            <p style="font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.25rem">The project proposal is submitted to get the research idea, problem and plan approved before work begins.</p>
+            <span style="display:inline-block;font-size:.75rem;font-weight:700;background:#d1fae5;color:#047857;padding:.3rem .75rem;border-radius:9999px">✓ Completed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2: Proposal Presentation -->
+      <div class="reveal" style="position:relative;display:flex;align-items:flex-start;margin-bottom:3rem">
+        <div style="position:absolute;left:24px;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(-50%);margin-top:6px;z-index:10;background:#10b981" class="md:left-1/2"></div>
+        <div style="margin-left:3.5rem;width:100%" class="md:ml-auto md:w-1/2 md:pl-14">
+          <div class="card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+            <span style="font-size:.8rem;font-weight:800;color:#4f46e5;letter-spacing:.08em;text-transform:uppercase">March 2026</span>
+            <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin:.5rem 0">Proposal Presentation</h3>
+            <p style="font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.25rem">The proposal is presented to the panel, which reviews its feasibility and gives feedback to refine the project.</p>
+            <span style="display:inline-block;font-size:.75rem;font-weight:700;background:#d1fae5;color:#047857;padding:.3rem .75rem;border-radius:9999px">✓ Completed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 3: Progress Presentation 1 -->
+      <div class="reveal" style="position:relative;display:flex;align-items:flex-start;margin-bottom:3rem">
+        <div style="position:absolute;left:24px;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(-50%);margin-top:6px;z-index:10;background:#10b981" class="md:left-1/2"></div>
+        <div style="margin-left:3.5rem;width:100%" class="md:ml-0 md:w-1/2 md:pr-14 md:text-right">
+          <div class="card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+            <span style="font-size:.8rem;font-weight:800;color:#4f46e5;letter-spacing:.08em;text-transform:uppercase">May 2026</span>
+            <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin:.5rem 0">Progress Presentation 1</h3>
+            <p style="font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.25rem">Reviews the 50% completion status of the project and reveals any gaps or inconsistencies in the design and requirements.</p>
+            <span style="display:inline-block;font-size:.75rem;font-weight:700;background:#d1fae5;color:#047857;padding:.3rem .75rem;border-radius:9999px">✓ Completed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 4: Progress Presentation 2 -->
+      <div class="reveal" style="position:relative;display:flex;align-items:flex-start;margin-bottom:3rem">
+        <div style="position:absolute;left:24px;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(-50%);margin-top:6px;z-index:10;background:#10b981" class="md:left-1/2"></div>
+        <div style="margin-left:3.5rem;width:100%" class="md:ml-auto md:w-1/2 md:pl-14">
+          <div class="card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+            <span style="font-size:.8rem;font-weight:800;color:#4f46e5;letter-spacing:.08em;text-transform:uppercase">August – September 2026</span>
+            <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin:.5rem 0">Progress Presentation 2</h3>
+            <p style="font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.25rem">Reviews the 90% completion status with a demonstration of the project, along with a poster describing the project as a whole.</p>
+            <span style="display:inline-block;font-size:.75rem;font-weight:700;background:#d1fae5;color:#047857;padding:.3rem .75rem;border-radius:9999px">✓ Completed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 5: Final Presentation and Viva -->
+      <div class="reveal" style="position:relative;display:flex;align-items:flex-start;margin-bottom:3rem">
+        <div style="position:absolute;left:24px;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(-50%);margin-top:6px;z-index:10;background:#f59e0b" class="md:left-1/2"></div>
+        <div style="margin-left:3.5rem;width:100%" class="md:ml-0 md:w-1/2 md:pr-14 md:text-right">
+          <div class="card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+            <span style="font-size:.8rem;font-weight:800;color:#64748b;letter-spacing:.08em;text-transform:uppercase">October 2026</span>
+            <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin:.5rem 0">Final Presentation and Viva</h3>
+            <p style="font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.25rem">A final presentation and an individual viva to assess each member's contribution to the project.</p>
+            <span style="display:inline-block;font-size:.75rem;font-weight:700;background:#fef3c7;color:#92400e;padding:.3rem .75rem;border-radius:9999px">Due Today</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 6: Research Paper Submission -->
+      <div class="reveal" style="position:relative;display:flex;align-items:flex-start;margin-bottom:3rem">
+        <div style="position:absolute;left:24px;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(-50%);margin-top:6px;z-index:10;background:#f59e0b" class="md:left-1/2"></div>
+        <div style="margin-left:3.5rem;width:100%" class="md:ml-auto md:w-1/2 md:pl-14">
+          <div class="card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+            <span style="font-size:.8rem;font-weight:800;color:#64748b;letter-spacing:.08em;text-transform:uppercase">October 2026</span>
+            <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin:.5rem 0">Research Paper Submission</h3>
+            <p style="font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.25rem">Describes what the research contributes to existing knowledge, giving due recognition to all the work referred to.</p>
+            <span style="display:inline-block;font-size:.75rem;font-weight:700;background:#fef3c7;color:#92400e;padding:.3rem .75rem;border-radius:9999px">Upcoming</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 7: Final Thesis Submission -->
+      <div class="reveal" style="position:relative;display:flex;align-items:flex-start">
+        <div style="position:absolute;left:24px;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transform:translateX(-50%);margin-top:6px;z-index:10;background:#f59e0b" class="md:left-1/2"></div>
+        <div style="margin-left:3.5rem;width:100%" class="md:ml-0 md:w-1/2 md:pr-14 md:text-right">
+          <div class="card-lift" style="background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+            <span style="font-size:.8rem;font-weight:800;color:#64748b;letter-spacing:.08em;text-transform:uppercase">October 2026</span>
+            <h3 style="font-family:'Sora';font-size:1.25rem;font-weight:700;color:#0f172a;margin:.5rem 0">Final Thesis Submission</h3>
+            <p style="font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.25rem">The final thesis evaluates the completed project done throughout the year, including the individual and group reports.</p>
+            <span style="display:inline-block;font-size:.75rem;font-weight:700;background:#fef3c7;color:#92400e;padding:.3rem .75rem;border-radius:9999px">Upcoming</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== DOWNLOADS ========== -->
+ <section id="milestones" style="position:relative;padding:6rem 0;background:linear-gradient(180deg,#f8fafc,#fff);overflow:hidden">
+  <div class="dot-pattern" style="position:absolute;inset:0;opacity:.3"></div>
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    <div class="reveal" style="text-align:center;margin-bottom:4rem">
+      <span style="display:inline-block;padding:.375rem 1rem;background:#e0e7ff;color:#4338ca;border-radius:9999px;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem">PROJECT DELIVERABLES</span>
+      <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#0f172a;margin-bottom:1rem"> <span class="gradient-text">Downloads</span></h2>
+      <p style="color:#64748b;max-width:42rem;margin:0 auto;font-size:1.125rem">Access our project documentation and presentations to learn more about MathsMate's development and research.</p>
+    </div>
+<section id="downloads" style="position:relative;padding:6rem 0;background:#fff">
+  <div style="position:relative;max-width:72rem;margin:0 auto;padding:0 1rem">
+
+    <!-- ===== DOCUMENTS SECTION ===== -->
+    <div class="reveal" style="text-align:center;margin-bottom:2.5rem">
+      <h2 style="font-family:'Sora';font-size:clamp(1.75rem,3.5vw,2.5rem);font-weight:800;color:#0f172a">Documents</h2>
+    </div>
+
+    <div style="display:grid;gap:1.25rem;margin-bottom:5rem" class="md:grid-cols-2">
+
+
+     <!-- Proposal Reports Individual -->
+<div class="reveal card-lift" style="display:flex;gap:1.25rem;background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);transition-delay:.05s">
+  <div style="flex-shrink:0;width:56px;height:56px;background:#16a34a;border-radius:.75rem;display:flex;align-items:center;justify-content:center">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+  </div>
+  <div style="flex:1;min-width:0">
+    <h3 style="font-family:'Sora';font-size:1.05rem;font-weight:700;color:#0f172a;margin-bottom:.35rem">Proposal Reports Individual</h3>
+    <p style="font-size:.85rem;color:#64748b;line-height:1.5;margin-bottom:.9rem">Detailed individual proposal reports for the project</p>
+    <a href="https://drive.google.com/drive/folders/1WJP2uSoT72WkpOF42l0obmK95WrzAgZw?usp=drive_link" target="_blank" rel="noopener noreferrer" aria-label="Open Proposal Reports Individual folder in Google Drive" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:#16a34a;transition:color .2s" onmouseover="this.style.color='#15803d'" onmouseout="this.style.color='#16a34a'">
+      Open in Drive
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    </a>
+  </div>
+</div>
+
+ <!-- Component Reports Individual -->
+<div class="reveal card-lift" style="display:flex;gap:1.25rem;background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);transition-delay:.1s">
+  <div style="flex-shrink:0;width:56px;height:56px;background:#16a34a;border-radius:.75rem;display:flex;align-items:center;justify-content:center">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+  </div>
+  <div style="flex:1;min-width:0">
+    <h3 style="font-family:'Sora';font-size:1.05rem;font-weight:700;color:#0f172a;margin-bottom:.35rem">Component Reports Individual</h3>
+    <p style="font-size:.85rem;color:#64748b;line-height:1.5;margin-bottom:.9rem">Individual reports for each system component</p>
+    <a href="https://drive.google.com/drive/folders/1jBhaYYvZv2QpOqkNFn82FQe6a5yL2m7t?usp=sharing" target="_blank" rel="noopener noreferrer" aria-label="Open Component Reports folder in Google Drive" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:#16a34a;transition:color .2s" onmouseover="this.style.color='#15803d'" onmouseout="this.style.color='#16a34a'">
+      Open in Drive
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    </a>
+  </div>
+</div>
+
+    <!-- Research Paper -->
+<div class="reveal card-lift" style="display:flex;gap:1.25rem;background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);transition-delay:.15s">
+  <div style="flex-shrink:0;width:56px;height:56px;background:#16a34a;border-radius:.75rem;display:flex;align-items:center;justify-content:center">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+  </div>
+  <div style="flex:1;min-width:0">
+    <h3 style="font-family:'Sora';font-size:1.05rem;font-weight:700;color:#0f172a;margin-bottom:.35rem">Research Paper</h3>
+    <p style="font-size:.85rem;color:#64748b;line-height:1.5;margin-bottom:.9rem">Comprehensive research paper detailing the project</p>
+    <a href="documents/research-paper.pdf" target="_blank" rel="noopener noreferrer" aria-label="Open the Research Paper PDF in a new tab" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:#16a34a;transition:color .2s" onmouseover="this.style.color='#15803d'" onmouseout="this.style.color='#16a34a'">
+      Download Document
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    </a>
+  </div>
+</div>
+
+    </div>
+
+    <!-- ===== PRESENTATIONS SECTION ===== -->
+    <div class="reveal" style="text-align:center;margin-bottom:2.5rem">
+      <h2 style="font-family:'Sora';font-size:clamp(1.75rem,3.5vw,2.5rem);font-weight:800;color:#0f172a">Presentations</h2>
+    </div>
+
+    <div style="display:grid;gap:1.25rem" class="md:grid-cols-2">
+
+      <!-- Final Presentation -->
+      <div class="reveal card-lift" style="display:flex;gap:1.25rem;background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb;box-shadow:0 2px 8px -2px rgba(0,0,0,.05)">
+        <div style="flex-shrink:0;width:56px;height:56px;background:#16a34a;border-radius:.75rem;display:flex;align-items:center;justify-content:center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <h3 style="font-family:'Sora';font-size:1.05rem;font-weight:700;color:#0f172a;margin-bottom:.35rem">Final Presentation</h3>
+          <p style="font-size:.85rem;color:#64748b;line-height:1.5;margin-bottom:.9rem">Final project presentation and defense</p>
+          <span style="display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:#94a3b8">
+            Coming Soon
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+        </div>
+      </div>
+
+
+<!-- Progress Presentation 1 -->
+<div class="reveal card-lift" style="display:flex;gap:1.25rem;background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);transition-delay:.05s">
+  <div style="flex-shrink:0;width:56px;height:56px;background:#16a34a;border-radius:.75rem;display:flex;align-items:center;justify-content:center">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </div>
+  <div style="flex:1;min-width:0">
+    <h3 style="font-family:'Sora';font-size:1.05rem;font-weight:700;color:#0f172a;margin-bottom:.35rem">Progress Presentation 1</h3>
+    <p style="font-size:.85rem;color:#64748b;line-height:1.5;margin-bottom:.9rem">First progress presentation showcasing initial results</p>
+    <a href="presentations/pp1.pptx" download="Progress-Presentation-1.pptx" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:#16a34a;transition:color .2s" onmouseover="this.style.color='#15803d'" onmouseout="this.style.color='#16a34a'">
+      Download PPTX
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    </a>
+  </div>
+</div>
+
+<!-- Progress Presentation 2 -->
+<div class="reveal card-lift" style="display:flex;gap:1.25rem;background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);transition-delay:.1s">
+  <div style="flex-shrink:0;width:56px;height:56px;background:#16a34a;border-radius:.75rem;display:flex;align-items:center;justify-content:center">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </div>
+  <div style="flex:1;min-width:0">
+    <h3 style="font-family:'Sora';font-size:1.05rem;font-weight:700;color:#0f172a;margin-bottom:.35rem">Progress Presentation 2</h3>
+    <p style="font-size:.85rem;color:#64748b;line-height:1.5;margin-bottom:.9rem">Second progress presentation with updated results</p>
+    <a href="presentations/pp2.pptx" download="Progress-Presentation-2.pptx" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:#16a34a;transition:color .2s" onmouseover="this.style.color='#15803d'" onmouseout="this.style.color='#16a34a'">
+      Download PPTX
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    </a>
+  </div>
+</div>
+
+<!-- Proposal Presentation -->
+<div class="reveal card-lift" style="display:flex;gap:1.25rem;background:#fff;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);transition-delay:.15s">
+  <div style="flex-shrink:0;width:56px;height:56px;background:#16a34a;border-radius:.75rem;display:flex;align-items:center;justify-content:center">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </div>
+  <div style="flex:1;min-width:0">
+    <h3 style="font-family:'Sora';font-size:1.05rem;font-weight:700;color:#0f172a;margin-bottom:.35rem">Proposal Presentation</h3>
+    <p style="font-size:.85rem;color:#64748b;line-height:1.5;margin-bottom:.9rem">Initial proposal presentation to stakeholders</p>
+    <a href="presentations/proposal.pptx" download="Proposal-Presentation.pptx" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;font-weight:600;color:#16a34a;transition:color .2s" onmouseover="this.style.color='#15803d'" onmouseout="this.style.color='#16a34a'">
+      Download PPTX
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    </a>
+  </div>
+</div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== ABOUT ========== -->
+<section id="about" style="position:relative;padding:6rem 0;background:linear-gradient(180deg,#eef2ff,#fff)">
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    <div class="reveal" style="text-align:center;margin-bottom:4rem">
+      <span style="display:inline-block;padding:.375rem 1rem;background:#e0e7ff;color:#4338ca;border-radius:9999px;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem">Our Team</span>
+      <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#0f172a;margin-bottom:1rem">Meet Our Team</h2>
+      <p style="color:#64748b;max-width:52rem;margin:0 auto;font-size:1.125rem;line-height:1.7">The Interactive Learning Tool for Dyscalculia Kids is developed by a team from the Faculty of Computing at the Sri Lanka Institute of Information Technology (SLIIT), under the guidance of experienced supervisors. We combine machine learning, adaptive systems and learning analytics to build inclusive mathematics learning support for children with dyscalculia in Sri Lanka.</p>
+    </div>
+
+<h3 class="reveal" style="font-family:'Sora';font-size:1.125rem;font-weight:700;color:#334155;margin-bottom:1.5rem">Supervisors</h3>
+<div style="display:grid;gap:1.5rem;margin-bottom:3rem" class="md:grid-cols-2">
+
+  <!-- Supervisor 1 -->
+  <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:2rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05)">
+    <div style="display:flex;align-items:center;gap:1.5rem">
+      <!-- Photo -->
+      <div style="flex-shrink:0;width:110px;height:110px;border-radius:50%;padding:4px;background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);box-shadow:0 12px 26px -8px rgba(99,102,241,.5)">
+        <img src="images/supervisors/sanvitha-kasthuriarachchi.png" alt="Dr. Sanvitha Kasthuriarachchi" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #fff;display:block" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;color:#4338ca;font-size:2rem;border:4px solid #fff\'>SK</div>'">
+      </div>
+      <!-- Info -->
+      <div style="min-width:0">
+        <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;font-size:1.15rem;margin-bottom:.35rem">Dr. Sanvitha Kasthuriarachchi</h4>
+        <p style="font-size:.875rem;color:#64748b;margin-bottom:.35rem">Supervisor · Faculty of Computing, SLIIT</p>
+        <a href="mailto:sanvitha.k@sliit.lk" style="font-size:.875rem;color:#4f46e5;font-weight:500">sanvitha.k@sliit.lk</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supervisor 2 -->
+  <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:2rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05);transition-delay:.1s">
+    <div style="display:flex;align-items:center;gap:1.5rem">
+      <!-- Photo -->
+      <div style="flex-shrink:0;width:110px;height:110px;border-radius:50%;padding:4px;background:linear-gradient(135deg,#a855f7,#ec4899,#f59e0b);box-shadow:0 12px 26px -8px rgba(168,85,247,.5)">
+        <img src="images/supervisors/thisara-shyamalee.png" alt="Thisara Shyamalee" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #fff;display:block" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#f3e8ff,#e9d5ff);display:flex;align-items:center;justify-content:center;font-family:Sora;font-weight:800;color:#7e22ce;font-size:2rem;border:4px solid #fff\'>TS</div>'">
+      </div>
+      <!-- Info -->
+      <div style="min-width:0">
+        <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;font-size:1.15rem;margin-bottom:.35rem">Thisara Shyamalee</h4>
+        <p style="font-size:.875rem;color:#64748b;margin-bottom:.35rem">Co-Supervisor · Faculty of Computing, SLIIT</p>
+        <a href="mailto:thisara.s@sliit.lk" style="font-size:.875rem;color:#4f46e5;font-weight:500">thisara.s@sliit.lk</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<h3 class="reveal" style="font-family:'Sora';font-size:1.125rem;font-weight:700;color:#334155;margin-bottom:1.5rem">Group Members</h3>
+<div style="display:grid;gap:1.5rem;margin-bottom:3rem" class="md:grid-cols-2 lg:grid-cols-4">
+
+  <!-- Member 1 - Navodya -->
+  <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:2.25rem 1.75rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05);text-align:center">
+    <div style="width:130px;height:130px;margin:0 auto 1.5rem;border-radius:50%;padding:4px;background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 14px 30px -10px rgba(99,102,241,.5)">
+      <img src="images/team/navodya.png" alt="Navodya K.M.I.G.T" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #fff;display:block" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;color:#fff;font-family:Sora;font-weight:800;font-size:2rem;border:4px solid #fff\'>NK</div>'">
+    </div>
+    <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;font-size:1.15rem;margin-bottom:.4rem">Navodya K.M.I.G.T</h4>
+    <p style="font-size:.8rem;color:#94a3b8;margin-bottom:.6rem;font-weight:600;letter-spacing:.05em">IT22136206</p>
+    <p style="font-size:.9rem;color:#475569;margin-bottom:1rem;line-height:1.5">Cognitive Skill Profiling System</p>
+    <a href="mailto:it22136206@my.sliit.lk" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;font-weight:600;color:#4f46e5;transition:color .2s;padding:.4rem .75rem;background:#eef2ff;border-radius:.5rem" onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#eef2ff'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      it22136206@my.sliit.lk
+    </a>
+  </div>
+
+  <!-- Member 2 - Dhananjani -->
+  <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:2.25rem 1.75rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05);text-align:center;transition-delay:.1s">
+    <div style="width:130px;height:130px;margin:0 auto 1.5rem;border-radius:50%;padding:4px;background:linear-gradient(135deg,#a855f7,#9333ea);box-shadow:0 14px 30px -10px rgba(168,85,247,.5)">
+      <img src="images/team/dhananjani.png" alt="Dhananjani G.A.U." style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #fff;display:block" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#a855f7,#9333ea);display:flex;align-items:center;justify-content:center;color:#fff;font-family:Sora;font-weight:800;font-size:2rem;border:4px solid #fff\'>DG</div>'">
+    </div>
+    <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;font-size:1.15rem;margin-bottom:.4rem">Dhananjani G.A.U.</h4>
+    <p style="font-size:.8rem;color:#94a3b8;margin-bottom:.6rem;font-weight:600;letter-spacing:.05em">IT22224316</p>
+    <p style="font-size:.9rem;color:#475569;margin-bottom:1rem;line-height:1.5">Personalized Math Learning Engine</p>
+    <a href="mailto:it22224316@my.sliit.lk" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;font-weight:600;color:#9333ea;transition:color .2s;padding:.4rem .75rem;background:#faf5ff;border-radius:.5rem" onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='#faf5ff'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      it22224316@my.sliit.lk
+    </a>
+  </div>
+
+  <!-- Member 3 - Alwis -->
+  <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:2.25rem 1.75rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05);text-align:center;transition-delay:.2s">
+    <div style="width:130px;height:130px;margin:0 auto 1.5rem;border-radius:50%;padding:4px;background:linear-gradient(135deg,#ec4899,#db2777);box-shadow:0 14px 30px -10px rgba(236,72,153,.5)">
+      <img src="images/team/alwis.png" alt="Alwis L.P.M" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #fff;display:block" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#ec4899,#db2777);display:flex;align-items:center;justify-content:center;color:#fff;font-family:Sora;font-weight:800;font-size:2rem;border:4px solid #fff\'>AL</div>'">
+    </div>
+    <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;font-size:1.15rem;margin-bottom:.4rem">Alwis L.P.M</h4>
+    <p style="font-size:.8rem;color:#94a3b8;margin-bottom:.6rem;font-weight:600;letter-spacing:.05em">IT22117878</p>
+    <p style="font-size:.9rem;color:#475569;margin-bottom:1rem;line-height:1.5">Adaptive Game-Based Learning Engine</p>
+    <a href="mailto:it22117878@my.sliit.lk" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;font-weight:600;color:#db2777;transition:color .2s;padding:.4rem .75rem;background:#fdf2f8;border-radius:.5rem" onmouseover="this.style.background='#fce7f3'" onmouseout="this.style.background='#fdf2f8'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      it22117878@my.sliit.lk
+    </a>
+  </div>
+
+  <!-- Member 4 - Rakeesha -->
+  <div class="reveal card-lift" style="background:#fff;border-radius:1rem;padding:2.25rem 1.75rem;border:1px solid #f1f5f9;box-shadow:0 4px 12px -2px rgba(0,0,0,.05);text-align:center;transition-delay:.3s">
+    <div style="width:130px;height:130px;margin:0 auto 1.5rem;border-radius:50%;padding:4px;background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 14px 30px -10px rgba(245,158,11,.5)">
+      <img src="images/team/rakeesha.png" alt="Rakeesha M.G.N" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #fff;display:block" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;color:#fff;font-family:Sora;font-weight:800;font-size:2rem;border:4px solid #fff\'>RM</div>'">
+    </div>
+    <h4 style="font-family:'Sora';font-weight:700;color:#0f172a;font-size:1.15rem;margin-bottom:.4rem">Rakeesha M.G.N</h4>
+    <p style="font-size:.8rem;color:#94a3b8;margin-bottom:.6rem;font-weight:600;letter-spacing:.05em">IT21275524</p>
+    <p style="font-size:.9rem;color:#475569;margin-bottom:1rem;line-height:1.5">Learning Insight and Early Warning</p>
+    <a href="mailto:it21275524@my.sliit.lk" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;font-weight:600;color:#d97706;transition:color .2s;padding:.4rem .75rem;background:#fffbeb;border-radius:.5rem" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      it21275524@my.sliit.lk
+    </a>
+  </div>
+
+</div>
+</div>
+    <h3 class="reveal" style="font-family:'Sora';font-size:1.125rem;font-weight:700;color:#334155;margin-bottom:1.5rem">Project Achievements</h3>
+    <div style="display:grid;gap:1rem" class="md:grid-cols-2">
+      <div class="reveal" style="display:flex;gap:.75rem;padding:1rem;background:#fff;border-radius:.75rem;border:1px solid #f1f5f9">
+        <span style="color:#10b981;font-weight:700;flex-shrink:0">✓</span>
+        <p style="font-size:.875rem;color:#334155">An integrated four-component platform for children with dyscalculia, aligned with SDG 4 (Quality Education).</p>
+      </div>
+      <div class="reveal" style="display:flex;gap:.75rem;padding:1rem;background:#fff;border-radius:.75rem;border:1px solid #f1f5f9;transition-delay:.05s">
+        <span style="color:#10b981;font-weight:700;flex-shrink:0">✓</span>
+        <p style="font-size:.875rem;color:#334155">Cognitive skill profiling with Random Forest, reaching an average Macro F1 of 0.640 across four cognitive skills.</p>
+      </div>
+      <div class="reveal" style="display:flex;gap:.75rem;padding:1rem;background:#fff;border-radius:.75rem;border:1px solid #f1f5f9;transition-delay:.1s">
+        <span style="color:#10b981;font-weight:700;flex-shrink:0">✓</span>
+        <p style="font-size:.875rem;color:#334155">Bayesian Knowledge Tracing for mastery estimation and personalized hints, with a target of at least 20% mastery improvement.</p>
+      </div>
+      <div class="reveal" style="display:flex;gap:.75rem;padding:1rem;background:#fff;border-radius:.75rem;border:1px solid #f1f5f9;transition-delay:.15s">
+        <span style="color:#10b981;font-weight:700;flex-shrink:0">✓</span>
+        <p style="font-size:.875rem;color:#334155">Adaptive game engine evaluated against Reinforcement Learning, with the rule-based model selected (72.4% safety and stability).</p>
+      </div>
+      <div class="reveal" style="display:flex;gap:.75rem;padding:1rem;background:#fff;border-radius:.75rem;border:1px solid #f1f5f9;transition-delay:.2s">
+        <span style="color:#10b981;font-weight:700;flex-shrink:0">✓</span>
+        <p style="font-size:.875rem;color:#334155">Early-warning pipeline with GMM learner profiles and Logistic Regression risk prediction for teachers and parents.</p>
+      </div>
+      <div class="reveal" style="display:flex;gap:.75rem;padding:1rem;background:#fff;border-radius:.75rem;border:1px solid #f1f5f9;transition-delay:.25s">
+        <span style="color:#10b981;font-weight:700;flex-shrink:0">✓</span>
+        <p style="font-size:.875rem;color:#334155">Data collected from real learning sessions with parental consent and anonymization.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONTACT ========== -->
+<section id="contact" style="position:relative;padding:6rem 0;background:#0f172a;overflow:hidden">
+  <div class="grid-pattern" style="position:absolute;inset:0;opacity:.08"></div>
+  <div class="animate-blob" style="position:absolute;top:-5rem;right:-5rem;width:24rem;height:24rem;background:rgba(99,102,241,.2);border-radius:50%;filter:blur(80px)"></div>
+  <div class="animate-blob" style="position:absolute;bottom:-5rem;left:-5rem;width:24rem;height:24rem;background:rgba(236,72,153,.2);border-radius:50%;filter:blur(80px);animation-delay:-5s"></div>
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1rem">
+    <div class="reveal" style="text-align:center;margin-bottom:3rem">
+      <span style="display:inline-block;padding:.375rem 1rem;background:rgba(99,102,241,.2);color:#a5b4fc;border-radius:9999px;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem">Get in Touch</span>
+      <h2 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#fff;margin-bottom:1rem">Contact Us</h2>
+      <p style="color:#94a3b8;max-width:32rem;margin:0 auto;font-size:1.125rem">Have questions about our project? We would love to hear from you.</p>
+    </div>
+
+    <div style="display:grid;gap:1.5rem;max-width:56rem;margin:0 auto" class="md:grid-cols-3">
+      <div class="reveal" style="text-align:center;padding:1.5rem;background:rgba(30,41,59,.6);backdrop-filter:blur(8px);border:1px solid rgba(51,65,85,.8);border-radius:1rem">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <h4 style="font-weight:700;color:#fff;margin-bottom:.5rem">Email</h4>
+        <a href="mailto:tharushinavodya233@gmail.com" style="color:#818cf8;font-size:.875rem">tharushinavodya233@gmail.com</a>
+      </div>
+      <div class="reveal" style="text-align:center;padding:1.5rem;background:rgba(30,41,59,.6);backdrop-filter:blur(8px);border:1px solid rgba(51,65,85,.8);border-radius:1rem;transition-delay:.1s">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#a855f7,#9333ea);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+        </div>
+        <h4 style="font-weight:700;color:#fff;margin-bottom:.5rem">Phone</h4>
+        <a href="tel:+94112413900" style="color:#c084fc;font-size:.875rem">+94 11 241 3900</a>
+      </div>
+      <div class="reveal" style="text-align:center;padding:1.5rem;background:rgba(30,41,59,.6);backdrop-filter:blur(8px);border:1px solid rgba(51,65,85,.8);border-radius:1rem;transition-delay:.2s">
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#ec4899,#db2777);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <h4 style="font-weight:700;color:#fff;margin-bottom:.5rem">Address</h4>
+        <p style="color:#f9a8d4;font-size:.875rem">Faculty of Computing, SLIIT<br>Malabe Campus, New Kandy Rd<br>Malabe 10115, Sri Lanka</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer style="position:relative;background:linear-gradient(180deg,#020617 0%,#0f172a 50%,#020617 100%);overflow:hidden;padding-top:4rem">
+
+  <!-- Background layers -->
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(99,102,241,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.06) 1px,transparent 1px);background-size:40px 40px;pointer-events:none"></div>
+  <div class="animate-blob" style="position:absolute;top:-10rem;left:-10rem;width:24rem;height:24rem;background:radial-gradient(circle,rgba(99,102,241,.15) 0%,transparent 70%);border-radius:50%;filter:blur(60px);pointer-events:none"></div>
+  <div class="animate-blob" style="position:absolute;bottom:-10rem;right:-10rem;width:24rem;height:24rem;background:radial-gradient(circle,rgba(236,72,153,.12) 0%,transparent 70%);border-radius:50%;filter:blur(60px);animation-delay:-5s;pointer-events:none"></div>
+
+  <!-- Top gradient line -->
+  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6366f1,#a855f7,#ec4899,transparent)"></div>
+
+  <div style="position:relative;max-width:80rem;margin:0 auto;padding:0 1.5rem">
+
+    <!-- ===== MAIN FOOTER GRID ===== -->
+    <div style="display:grid;gap:3rem;padding-bottom:3rem;border-bottom:1px solid rgba(71,85,105,.5)" class="lg:grid-cols-12">
+
+      <!-- Brand Column -->
+      <div style="grid-column:span 4" class="lg:col-span-4">
+        <a href="#home" style="display:inline-flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;text-decoration:none">
+          <div style="width:44px;height:44px;border-radius:.75rem;background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -8px rgba(99,102,241,.6)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7h6m-6 4h6m-6 4h3M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+          </div>
+          <div style="line-height:1.15">
+            <span style="display:block;font-family:'Sora';font-weight:800;font-size:1.05rem;color:#ffffff"><span style="background:linear-gradient(135deg,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">MathsMate</span></span>
+            <span style="display:block;font-size:.68rem;color:#cbd5e1;font-weight:600;letter-spacing:.08em">R26-IT-138</span>
+          </div>
+        </a>
+        <p style="font-size:.875rem;color:#cbd5e1;line-height:1.75;max-width:22rem;margin-bottom:1.25rem">
+          An integrated, data-driven learning platform empowering children with dyscalculia through cognitive profiling, adaptive math, and early-warning insights.
+        </p>
+
+        <!-- Compact brand info row -->
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.6rem">
+          <span style="display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;color:#a7f3d0;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);padding:.35rem .7rem;border-radius:9999px;font-weight:600">
+            <span style="width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981"></span>
+            SLIIT Research
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;color:#ddd6fe;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.4);padding:.35rem .7rem;border-radius:9999px;font-weight:600">
+            4 ML Components
+          </span>
+        </div>
+      </div>
+
+      <!-- Explore Links -->
+      <div style="grid-column:span 3" class="lg:col-span-3">
+        <h4 style="font-family:'Sora';font-size:.8rem;font-weight:800;color:#ffffff;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.25rem;position:relative;padding-bottom:.6rem">
+          Explore
+          <span style="position:absolute;left:0;bottom:0;width:32px;height:2px;background:linear-gradient(90deg,#6366f1,#a855f7);border-radius:2px"></span>
+        </h4>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:.85rem">
+          <li><a href="#home" class="footer-link">Home</a></li>
+          <li><a href="#domain" class="footer-link">Project Scope</a></li>
+          <li><a href="#methodology" class="footer-link">Methodology</a></li>
+          <li><a href="#technologies" class="footer-link">Technologies</a></li>
+          <li><a href="#milestones" class="footer-link">Timeline</a></li>
+        </ul>
+      </div>
+
+      <!-- Resources Links -->
+      <div style="grid-column:span 3" class="lg:col-span-3">
+        <h4 style="font-family:'Sora';font-size:.8rem;font-weight:800;color:#ffffff;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.25rem;position:relative;padding-bottom:.6rem">
+          Resources
+          <span style="position:absolute;left:0;bottom:0;width:32px;height:2px;background:linear-gradient(90deg,#a855f7,#ec4899);border-radius:2px"></span>
+        </h4>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:.85rem">
+          <li><a href="#downloads" class="footer-link">Downloads</a></li>
+          <li><a href="documents/research-paper.pdf" target="_blank" rel="noopener noreferrer" class="footer-link">Research Paper</a></li>
+          <li><a href="#about" class="footer-link">Our Team</a></li>
+          <li><a href="#contact" class="footer-link">Contact Us</a></li>
+        </ul>
+      </div>
+
+      <!-- CTA Column -->
+      <div style="grid-column:span 2" class="lg:col-span-2">
+        <h4 style="font-family:'Sora';font-size:.8rem;font-weight:800;color:#ffffff;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.25rem;position:relative;padding-bottom:.6rem">
+          Get Started
+          <span style="position:absolute;left:0;bottom:0;width:32px;height:2px;background:linear-gradient(90deg,#ec4899,#f59e0b);border-radius:2px"></span>
+        </h4>
+        <p style="font-size:.8rem;color:#cbd5e1;line-height:1.6;margin-bottom:1rem">Learn more about our research and platform.</p>
+        <a href="#downloads" style="display:inline-flex;align-items:center;gap:.4rem;padding:.65rem 1.1rem;font-size:.8rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#a855f7);border-radius:.6rem;text-decoration:none;box-shadow:0 8px 20px -8px rgba(99,102,241,.6);transition:all .3s ease" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 24px -8px rgba(168,85,247,.7)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 20px -8px rgba(99,102,241,.6)'">
+          View Deliverables
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- ===== BOTTOM BAR ===== -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1.75rem 0" class="md:flex-row md:justify-between md:text-left">
+      <p style="font-size:.8rem;color:#cbd5e1;text-align:center">
+        © 2026 <strong style="color:#ffffff;font-weight:600">Interactive Learning Tool for Dyscalculia Kids</strong>. All rights reserved.
+      </p>
+
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:1.5rem">
+        <span style="display:inline-flex;align-items:center;gap:.5rem;font-size:.78rem;color:#a7f3d0;font-weight:600">
+          <span style="width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981;animation:bounceSlow 1.5s infinite"></span>
+          SLIIT Faculty of Computing
+        </span>
+        <a href="#" style="font-size:.78rem;color:#cbd5e1;text-decoration:none;transition:color .2s;font-weight:500" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#cbd5e1'">Privacy</a>
+        <a href="#" style="font-size:.78rem;color:#cbd5e1;text-decoration:none;transition:color .2s;font-weight:500" onmouseover="this.style.color='#c4b5fd'" onmouseout="this.style.color='#cbd5e1'">Terms</a>
+        <span style="font-size:.78rem;color:#94a3b8;font-weight:600">R26-IT-138</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Footer link styles -->
+<style>
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    font-size: .9rem;
+    color: #e2e8f0;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color .2s ease, transform .2s ease;
+  }
+  .footer-link::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    opacity: 0.5;
+    transition: opacity .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .footer-link:hover {
+    color: #ffffff;
+    transform: translateX(4px);
+  }
+  .footer-link:hover::before {
+    opacity: 1;
+    box-shadow: 0 0 10px #a855f7;
+  }
+</style>
+
+<!-- BACK TO TOP
+<button id="backToTop" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button> -->
+
+<script>
+(function(){
+  'use strict';
+
+  /* ========== PRELOADER ========== */
+  function hidePreloader(){
+    var preloader = document.getElementById('preloader');
+    if (preloader) preloader.classList.add('hidden');
+  }
+  window.addEventListener('load', function(){
+    setTimeout(hidePreloader, 400);
+  });
+  // Fallback if load takes too long
+  setTimeout(hidePreloader, 2500);
+
+  /* ========== READING PROGRESS ========== */
+  var progressBar = document.getElementById('readingProgress');
+  function updateProgress(){
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    var pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    if (progressBar) progressBar.style.width = pct + '%';
+  }
+
+  /* ========== NAVBAR SHADOW & BACK TO TOP ========== */
+  var navbar = document.getElementById('navbar');
+  var backToTop = document.getElementById('backToTop');
+  function handleScroll(){
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    if (navbar) {
+      navbar.style.boxShadow = scrollTop > 20
+        ? '0 4px 20px -8px rgba(0,0,0,0.1)'
+        : 'none';
+    }
+    // The Back to Top button is currently commented out in the HTML,
+    // so only update it when the element exists.
+    if (backToTop) {
+      if (scrollTop > 400) {
+        backToTop.classList.add('show');
+      } else {
+        backToTop.classList.remove('show');
+      }
+    }
+  }
+
+  // Throttled scroll handler
+  var ticking = false;
+  window.addEventListener('scroll', function(){
+    if (!ticking) {
+      window.requestAnimationFrame(function(){
+        updateProgress();
+        handleScroll();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, {passive:true});
+
+  // Initial call
+  updateProgress();
+  handleScroll();
+
+  /* ========== MOBILE MENU ========== */
+  var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  var mobileMenu = document.getElementById('mobileMenu');
+  var menuIcon = document.getElementById('menuIcon');
+
+  var menuOpen = false;
+
+  function setMenuIcon(open){
+    if (!menuIcon) return;
+    if (open) {
+      menuIcon.innerHTML = '<path d="M6 18L18 6M6 6l12 12"/>';
+    } else {
+      menuIcon.innerHTML = '<path d="M4 6h16M4 12h16M4 18h16"/>';
+    }
+  }
+
+  if (mobileMenuBtn && mobileMenu) {
+    mobileMenuBtn.addEventListener('click', function(){
+      menuOpen = !menuOpen;
+      mobileMenu.classList.toggle('open', menuOpen);
+      mobileMenuBtn.setAttribute('aria-expanded', String(menuOpen));
+      setMenuIcon(menuOpen);
+    });
+
+    // Close mobile menu on link click
+    mobileMenu.querySelectorAll('a').forEach(function(link){
+      link.addEventListener('click', function(){
+        menuOpen = false;
+        mobileMenu.classList.remove('open');
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        setMenuIcon(false);
+      });
+    });
+  }
+
+  /* ========== SMOOTH SCROLL FOR NAV LINKS ========== */
+  document.querySelectorAll('a[href^="#"]').forEach(function(link){
+    link.addEventListener('click', function(e){
+      var href = this.getAttribute('href');
+      if (href === '#' || href.length < 2) return;
+      var target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        var offset = 80;
+        var targetPos = target.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({top: targetPos, behavior: 'smooth'});
+      }
+    });
+  });
+
+  /* ========== SCROLL REVEAL ========== */
+  var revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+  if ('IntersectionObserver' in window) {
+    var revealObserver = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {threshold: 0.08, rootMargin: '0px 0px -40px 0px'});
+
+    revealEls.forEach(function(el){ revealObserver.observe(el); });
+  } else {
+    // Fallback
+    revealEls.forEach(function(el){ el.classList.add('visible'); });
+  }
+
+  /* ========== COUNTER ANIMATION ========== */
+  function animateCounter(el){
+    var target = parseInt(el.getAttribute('data-target'), 10);
+    if (isNaN(target)) return;
+    var duration = 1800;
+    var startTime = null;
+
+    function step(timestamp){
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      // Ease-out cubic
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = Math.floor(eased * target);
+      el.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = target;
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  var counters = document.querySelectorAll('.counter');
+  if ('IntersectionObserver' in window) {
+    var counterObserver = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          animateCounter(entry.target);
+          counterObserver.unobserve(entry.target);
+        }
+      });
+    }, {threshold: 0.5});
+
+    counters.forEach(function(el){ counterObserver.observe(el); });
+  } else {
+    counters.forEach(function(el){ animateCounter(el); });
+  }
+
+  /* ========== ACTIVE NAV HIGHLIGHT ========== */
+  var sections = document.querySelectorAll('section[id]');
+  var navLinks = document.querySelectorAll('.nav-link');
+
+  function updateActiveNav(){
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var current = '';
+    sections.forEach(function(section){
+      var sectionTop = section.offsetTop - 120;
+      if (scrollTop >= sectionTop) {
+        current = section.getAttribute('id');
+      }
+    });
+    navLinks.forEach(function(link){
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  var navTicking = false;
+  window.addEventListener('scroll', function(){
+    if (!navTicking) {
+      window.requestAnimationFrame(function(){
+        updateActiveNav();
+        navTicking = false;
+      });
+      navTicking = true;
+    }
+  }, {passive:true});
+
+  updateActiveNav();
+
+  /* ========== NAV LINK HOVER EFFECT ========== */
+  navLinks.forEach(function(link){
+    link.addEventListener('mouseenter', function(){
+      if (!this.classList.contains('active')) {
+        this.style.color = '#4f46e5';
+        this.style.background = 'rgba(99,102,241,.06)';
+      }
+    });
+    link.addEventListener('mouseleave', function(){
+      if (!this.classList.contains('active')) {
+        this.style.color = '#475569';
+        this.style.background = 'transparent';
+      }
+    });
+  });
+
+  /* ========== KEYBOARD ESC CLOSES MOBILE MENU ========== */
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && menuOpen) {
+      menuOpen = false;
+      mobileMenu.classList.remove('open');
+      mobileMenuBtn.setAttribute('aria-expanded', false);
+      setMenuIcon(false);
+    }
+  });
+
+  /* ========== PARALLAX ON MATH SYMBOLS (subtle) ========== */
+  var mathSymbols = document.querySelectorAll('.math-symbol');
+  if (mathSymbols.length && window.innerWidth > 768) {
+    window.addEventListener('scroll', function(){
+      var y = window.pageYOffset;
+      if (y > window.innerHeight) return;
+      mathSymbols.forEach(function(sym, i){
+        var speed = (i % 3 + 1) * 0.05;
+        sym.style.transform = 'translateY(' + (y * speed) + 'px)';
+      });
+    }, {passive:true});
+  }
+
+})();
+</script>
+</body>
+</html>
